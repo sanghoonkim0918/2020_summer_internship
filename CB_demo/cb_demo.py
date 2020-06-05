@@ -165,4 +165,11 @@ for sample_index in range(num_samples):
     # Update the old policy if needed
     old_policy.update((user, old_chosen_action, reward_revealed))
 
+# The expected value of the reward revealed by the new policy
+# Actually, this is not the "true" expected value but a value 
+# calculated by monte carlo methods.
+# If you really want to be accurate, you can directly calculate 
+# the true expected value using the environment defined at the beginning.
+true_performance = np.mean(new_policy_true_rewards)
+
 # Implement a code to get IPS estimates using the trace
