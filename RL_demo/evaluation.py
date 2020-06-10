@@ -17,40 +17,34 @@ if __name__ == "__main__":
     noise_type = 'increasing_variance'
 
     # Initialize policies
-    behavior_policy = ('EpsilonGreedy', EpsilonGreedy(num_servers, epsilon=0.3))
-
+    behavior_policy = ('UniRan', UniRan(num_servers))
     target_policy1 = ('LeastLoad_0.3', LeastLoad(num_servers, epsilon=0.3))
     target_policy2 = ('LeastLoad_0', LeastLoad(num_servers, epsilon=0))
-    target_policy3 = ('NonstationaryBandit', NonstationaryBandit(num_servers, 0.2, 0.2))
+    target_policy3 = ('EpsilonGreedy', EpsilonGreedy(num_servers, epsilon=0.3))
+    target_policy4 = ('UCB1', UCB1(num_servers))
 
-    target_policies = [target_policy1, target_policy2, target_policy3]
+    # behavior_policy = ('EpsilonGreedy', EpsilonGreedy(num_servers, epsilon=0.3))
+    # target_policy1 = ('LeastLoad_0.3', LeastLoad(num_servers, epsilon=0.3))
+    # target_policy2 = ('LeastLoad_0', LeastLoad(num_servers, epsilon=0))
+    # target_policy3 = ('UniRan', UniRan(num_servers))
+    # target_policy4 = ('UCB1', UCB1(num_servers))
+
+
+    target_policies = [target_policy1, target_policy2, target_policy3, target_policy4]
     num_target_policies = len(target_policies)
 
-    policies = [target_policy1, target_policy2, target_policy3, behavior_policy]
-
-    # target_policy1 = ('UCB', UCB1(num_servers, reset_period=40))
-    # target_policy2 = ('GradBandit', GradBandit(num_servers, 0.1, num_requests, num_requests + 2))
-    # target_policy3 = ('NonstationaryBandit', NonstationaryBandit(num_servers, 0.2, 0.2))
-    # target_policy4 = ('LeastLoad_0.3', LeastLoad(num_servers, epsilon=0.3))
-    # target_policy5 = ('LeastLoad_0', LeastLoad(num_servers, epsilon=0))
-    #
-    # target_policies = [target_policy1, target_policy2, target_policy3, target_policy4, target_policy5]
-    # num_target_policies = len(target_policies)
-    #
-    # policies = [target_policy1, target_policy2, target_policy3, target_policy4, target_policy5, behavior_policy]
+    policies = [target_policy1, target_policy2, target_policy3, target_policy4, behavior_policy]
     num_policies = 1 + num_target_policies
 
     target_policy_names = [policy[0] for policy in policies if policy != policies[-1]]
 
     # Initialize environment (servers)
-    servers = Servers(num_policies=num_policies, num_servers=num_servers, noise_type=noise_type)
+    servers = Servers(num_policies=num_policies, num_servers=num_servers)
 
     # Initialize evaluation for each seed
     evaluations = [Evaluation(horizon=num_requests,
                               num_target_policies=num_target_policies,
-                              num_actions=num_servers,
-                              noise_type=noise_type,
-                              threshold=threshold)
+                              num_actions=num_servers)
                    for _ in range(num_seeds)]
 
     # Write output to a file
@@ -66,7 +60,7 @@ if __name__ == "__main__":
             wf.write(write_string)
 
             # Iterate over random seed
-            seed_add = 980918
+            seed_add = 0
             for seed in range(seed_add, seed_add + num_seeds):
                 # Set a numpy random seed
                 np.random.seed(seed)
@@ -82,55 +76,17 @@ if __name__ == "__main__":
                     total_latency_for_each_policy, trace = \
                         run_simulation(policies=policies, num_requests=num_requests, servers=servers)
 
-                    # Get the estimate for every target policy on the trajectory
-                    seed_evaluation.get_estimates(trace=trace,
-                                                  target_policies=target_policies,
-                                                  true_values=total_latency_for_each_policy)
+                    # Get the estimate of every target policy on the trajectory. 
+                    """
+                    Implement
+                    """
 
             # After finishing iterating over every random seed,
             # display the estimate of each target policy for the given number of trajectories
             for seed_evaluation in evaluations:
-                seed_evaluation.evaluation()
-
-            for target_policy_index in range(num_target_policies):
-                True_performances = np.array([seed_evaluation.estimates[target_policy_index]['estimates']['T']
-                                              for seed_evaluation in evaluations])
-                IPS_estimates = np.array([seed_evaluation.estimates[target_policy_index]['estimates']['IPS']
-                                          for seed_evaluation in evaluations])
-                IS_estimates = np.array([seed_evaluation.estimates[target_policy_index]['estimates']['IS']
-                                         for seed_evaluation in evaluations])
-                SIS_estimates = np.array([seed_evaluation.estimates[target_policy_index]['estimates']['SIS']
-                                          for seed_evaluation in evaluations])
-                SISAM_estimates = np.array([seed_evaluation.estimates[target_policy_index]['estimates']['SISAM']
-                                            for seed_evaluation in evaluations])
-                WIS_estimates = np.array([seed_evaluation.estimates[target_policy_index]['estimates']['WIS']
-                                          for seed_evaluation in evaluations])
-                SWIS_estimates = np.array([seed_evaluation.estimates[target_policy_index]['estimates']['SWIS']
-                                          for seed_evaluation in evaluations])
-                SWISAM_estimates = np.array([seed_evaluation.estimates[target_policy_index]['estimates']['SWISAM']
-                                             for seed_evaluation in evaluations])
-                DR_estimates = np.array([seed_evaluation.estimates[target_policy_index]['estimates']['DR']
-                                         for seed_evaluation in evaluations])
-                DRAM1_estimates = np.array([seed_evaluation.estimates[target_policy_index]['estimates']['DRAM1']
-                                            for seed_evaluation in evaluations])
-
-                estimates_string = format_estimates(policy_name=target_policy_names[target_policy_index],
-                                                    True_performances=True_performances,
-                                                    IPS_estimates=IPS_estimates,
-                                                    IS_estimates=IS_estimates,
-                                                    SIS_estimates=SIS_estimates,
-                                                    SISAM_estimates=SISAM_estimates,
-                                                    WIS_estimates=WIS_estimates,
-                                                    SWIS_estimates=SWIS_estimates,
-                                                    SWISAM_estimates=SWISAM_estimates,
-                                                    DR_estimates=DR_estimates,
-                                                    DRAM1_estimates=DRAM1_estimates)
-                wf.write(estimates_string)
-                print(estimates_string)
-
-            # # Reset each evaluation class for the next number of trajectories
-            # for seed_evaluation in evaluations:
-            #     seed_evaluation.reset()
+                """
+                Implement
+                """
 
 
 

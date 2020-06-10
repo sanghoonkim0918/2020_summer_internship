@@ -15,14 +15,14 @@ class Servers:
         """
         return the latency of the request sent to the chosen server.
         The latency is sampled from a lognormal distribution, which is
-        shifted to the right by the server load of the chosen server. 
+        shifted right by the server load of the chosen server. 
         """
         chosen_server_load = self.server_load[policy_index][chosen_server]
 
-        latency = chosen_server_load + np.random.lognormal(0, 0.5)
+        latency = chosen_server_load + np.random.lognormal(0, 0.6)
 
-        if latency < 1:
-            latency = 1
+        if latency <= 0:
+            latency = 0
 
         timer = ceil(latency)
 

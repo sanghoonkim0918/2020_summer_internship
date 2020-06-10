@@ -25,15 +25,19 @@ def run_simulation(policies, num_requests, servers):
 
     # Initialize store variables
     requests_being_processed_for_each_policy = [list() for _ in range(num_policies)]
-    total_latency_for_each_policy = np.array([0 for _ in range(num_policies)])
+    total_latency_for_each_policy = np.zeros(num_policies)
 
     # trace is a list of lists (samples) of [state, action, reward, behavior_probabilities]
-    # the form of state can be changed as more polices are implemented later
-    # the current form of state is: [server_load, noise_levels, list of (action, reward) revealed in the current time step]
-    trace = [[[None, None, list()], None, None, None] for _ in range(num_requests)]
+    # the current form of state is: [server_load, list of (action, reward) revealed in the current time step]
+    trace = [[[None, list()], None, None, None] for _ in range(num_requests)]
 
     # Helper functions
     def timer_pass(policy_index):
+        """
+        Check if there are requests that are completely processed.
+        Server spits out those requests. 
+        """
+
         timer_out = []
         indices = []
 
@@ -42,7 +46,9 @@ def run_simulation(policies, num_requests, servers):
         for arbitrary_request_index in range(len(requests_being_processed)):
             request_info = requests_being_processed[arbitrary_request_index]
 
-            if request_info['timer'] == 1:
+            timer = request_info['timer']
+
+            if timer == 0 or timer == 1:
                 indices.append(arbitrary_request_index)
             else:
                 requests_being_processed[arbitrary_request_index]['timer'] -= 1
@@ -64,7 +70,7 @@ def run_simulation(policies, num_requests, servers):
             request = None
 
         for policy_index in range(num_policies):
-            # Store the information of the current policy
+            # Store the name of the current policy
             policy = policies[policy_index][1]
 
             # Reward revealed
@@ -75,17 +81,16 @@ def run_simulation(policies, num_requests, servers):
                     chosen_server = request_info['chosen_server']
                     reward = request_info['reward']
 
-
                     # Record the reward revealed
                     total_latency_for_each_policy[policy_index] += reward
 
                     # Take out the request of the reward from the server
                     servers.server_load[policy_index][chosen_server] -= request_info['request_size']
 
-                    # Update a policy
+                    # Update the policy
                     policy.update(chosen_server, reward)
 
-                    # Update evaluation target policies if needed
+                    # If the policy is the behavior policy
                     if policy_index == behavior_policy_index:  # Behavior policy should be the first policy (index: 0) in the tuple policies
                         revealed_request_index = request_info['request_index']
 
@@ -94,18 +99,15 @@ def run_simulation(policies, num_requests, servers):
                         trace[revealed_request_index][2] = reward
 
                         # For the "current" state, record the revealed reward with the corresponding action.
-                        # This is for learning of evaluation target policies
+                        # This is for learning of target policies while doing counterfactual evaluations
                         if request_index < num_requests:
                             # This is not needed if the reward is revealed after every request is sent
                             trace[request_index][0][2].append((chosen_server, reward))
 
             if request is not None:
                 if policy_index == behavior_policy_index:  # Behavior policy should be the first policy (index: 0) in the tuple policies
-                    # record the probability of choosing each action for behavior policy
-                    if policy.policy_type == 'M':
-                        behavior_probabilities = policy.choose_action(return_prob=True)
-                    elif policy.policy_type == 'C':
-                        behavior_probabilities = policy.choose_action(context=servers.server_load[policy_index], return_prob=True)
+                    # record the probability of the behavior policy choosing each action 
+                    behavior_probabilities = policy.choose_action(context=servers.server_load[policy_index], return_prob=True)
                     trace[request_index][3] = behavior_probabilities
 
                     # Record the current server load, which is a part of state, for evaluation
@@ -115,17 +117,9 @@ def run_simulation(policies, num_requests, servers):
                     trace[request_index][0][0] = context
 
                 # Policy chooses an action
-                if policy.policy_type == 'M':
-                    chosen_server, probability = policy.choose_action()
-                else: #if policy.policy_type == 'C':
-                    chosen_server, probability = policy.choose_action(context=servers.server_load[policy_index])
+                chosen_server, _ = policy.choose_action(context=servers.server_load[policy_index])
 
-
-                latency_of_request, timer, noise_levels = servers.get_latency(policy_index, chosen_server)
-
-                if policy_index == behavior_policy_index:  # Behavior policy should be the first policy (index: 0) in the tuple policies
-                    # Record the current noise level for each action, which is a part of state, for evaluation
-                    trace[request_index][0][1] = noise_levels
+                latency_of_request, timer = servers.get_latency(policy_index, chosen_server)
 
                 # Record the current request to be routed
                 request_info = {'reward': -latency_of_request, 'timer': timer,
@@ -163,15 +157,14 @@ def run_simulation(policies, num_requests, servers):
 
 
 if __name__ == "__main__":
-    num_requests = 15
+    num_requests = 20
     num_servers = 4
 
     np.random.seed(0)
 
     behavior_policy = ('EpsilonGreedy_behavior', EpsilonGreedy(num_servers, epsilon=0.3))
     target_policy1 = ('UCB1_target1', UCB1(num_servers, reset_period=20))
-    target_policy2 = ('GradBandit_target2', GradBandit(num_servers, 0.1, num_requests, num_requests // 2))
-    policies = [target_policy1, target_policy2, behavior_policy]
+    policies = [target_policy1, behavior_policy]
 
     servers = Servers(num_policies=len(policies), num_servers=num_servers, noise_type='increasing_variance')
 
