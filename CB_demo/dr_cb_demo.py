@@ -99,9 +99,9 @@ class DRVW:
         """
 
         if reward is not None:
-            return f"{reward} |c {context} |a {action}"
+            return f"{reward} |c context{context} |a action{action}"
         else: 
-            return f"|c {context} |a {action}"
+            return f"|c context{context} |a action{action}"
 
     def update_Q(self, context, action, reward):
          "Implement a function that updates Q"
