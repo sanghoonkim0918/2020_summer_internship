@@ -98,7 +98,7 @@ class DRVW:
         and return a VW format string that contains the given inputs
         """
 
-        if reward:
+        if reward is not None:
             return f"{reward} |c {context} |a {action}"
         else: 
             return f"|c {context} |a {action}"
