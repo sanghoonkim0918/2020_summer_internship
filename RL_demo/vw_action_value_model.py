@@ -6,7 +6,7 @@ class VWActionValueModel(ActionValueModel):
     An ActionValueModel using VowpalWabbit (VW)
 
     the given VW format can be changed as you want.
-    Think about if the given VW format is correct! (This is not a trick question)
+    Think about if the given VW format is correct! 
     """
 
     def __init__(self, horizon, num_actions, policy, default_model="--power_t 0.0 -q la --quiet"):
