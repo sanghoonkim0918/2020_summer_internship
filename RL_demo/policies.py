@@ -36,19 +36,47 @@ class LeastLoad:
         self.num_actions = num_actions
         self.epsilon = epsilon
 
+    def __str__(self):
+        return f'LeastLoad_{self.epsilon}'
+
     def update(self, action, reward):
         pass
 
     def choose_action(self, context, return_prob=False, behavior_policy=True, chosen_action=None):
         least_loaded_server = np.argmin(context)
-        probabilities = [self.epsilon / (self.num_actions - 1)] * self.num_actions
-        probabilities[least_loaded_server] = 1 - self.epsilon
+        probabilities = [self.epsilon / self.num_actions] * self.num_actions
+        probabilities[least_loaded_server] += 1 - self.epsilon
 
         if return_prob:
             return probabilities
         action = np.random.choice(self.num_actions, p=probabilities)
 
-        return action, probabilities[action]
+        return action, probabilities
+
+    def reset(self):
+        pass
+
+class HighestLoad:
+    def __init__(self, num_actions, epsilon=0):
+        self.num_actions = num_actions
+        self.epsilon = epsilon
+
+    def __str__(self):
+        return f'HighestLoad_{self.epsilon}'
+
+    def update(self, action, reward):
+        pass
+
+    def choose_action(self, context, return_prob=False, behavior_policy=True, chosen_action=None):
+        highest_loaded_server = np.argmax(context)
+        probabilities = [self.epsilon / self.num_actions] * self.num_actions
+        probabilities[highest_loaded_server] += 1 - self.epsilon
+
+        if return_prob:
+            return probabilities
+        action = np.random.choice(self.num_actions, p=probabilities)
+
+        return action, probabilities
 
     def reset(self):
         pass
